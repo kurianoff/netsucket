@@ -1,0 +1,62 @@
+name: netsucket
+
+on:
+  workflow_dispatch:
+  push:
+    tags: [ "v[0-9]+.[0-9]+.[0-9]+" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Standardize HEAD Reference
+      id: head_ref
+      run: |
+        echo "REF=${{ github.event.pull_request && github.head_ref || github.ref_name }}" >> $GITHUB_ENV
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Build for darwin/amd64 (mac intel)
+      run: |
+        GOOS=darwin GOARCH=amd64 go build -o netsucket-mac-intel netsucket.go
+
+    - name: Build for darwin/arm64 (mac Mx)
+      run: |
+        GOOS=darwin GOARCH=arm64 go build -o netsucket-mac-m netsucket.go
+
+    - name: Create release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        draft: false
+        prerelease: false
+        release_name: Release ${{ env.REF }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG.md
+
+    - name: Upload mac intel artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./netsucket-mac-intel
+        asset_name: netsucket-mac-intel-${{ env.REF }}
+        asset_content_type: application/octet-stream
+
+    - name: Upload mac Mx (M1, M2) artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./netsucket-mac-m
+        asset_name: netsucket-mac-m-${{ env.REF }}
+        asset_content_type: application/octet-stream

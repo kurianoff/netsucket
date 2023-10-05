@@ -63,7 +63,7 @@ func main() {
 	flag.Parse()
 
 	if (*version == true) {
-		fmt.Println("netsucket version " + versionNumber)
+		fmt.Println(versionNumber)
 		return
 	}
 

@@ -1,3 +1,1 @@
-### v0.0.3
-
-73712d4 add SHA256 checksum to binaries
+99285e5 generalize ci workflow

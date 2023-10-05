@@ -7,6 +7,10 @@ on:
 
 jobs:
   build:
+    env:
+      PRODUCT: netsucket
+      DARWIN_AMD64: darwin-amd64
+      DARWIN_ARM64: darwin-arm64
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -23,11 +27,13 @@ jobs:
 
     - name: Build for darwin/amd64 (mac intel)
       run: |
-        GOOS=darwin GOARCH=amd64 go build -o netsucket-darwin-amd64 netsucket.go
+        GOOS=darwin GOARCH=amd64 go build -o ${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }} netsucket.go
+        sha256sum -b ${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }} | awk '{ print $1; }' > ${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }}.sha256
 
     - name: Build for darwin/arm64 (mac Mx)
       run: |
-        GOOS=darwin GOARCH=arm64 go build -o netsucket-darwin-arm64 netsucket.go
+        GOOS=darwin GOARCH=arm64 go build -o ${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }} netsucket.go
+        sha256sum -b ${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }} | awk '{ print $1; }' > ${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }}.sha256
 
     - name: Create release
       uses: actions/create-release@v1
@@ -47,9 +53,19 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./netsucket-darwin-amd64
-        asset_name: netsucket-darwin-amd64
+        asset_path: ./${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }}
+        asset_name: ${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }}
         asset_content_type: application/octet-stream
+
+    - name: Upload mac intel artifact SHA256 hash
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }}.sha256
+        asset_name: ${{ env.PRODUCT }}-${{ env.DARWIN_AMD64 }}.sha256
+        asset_content_type: text/plain
 
     - name: Upload mac Mx (M1, M2) artifact
       uses: actions/upload-release-asset@v1
@@ -57,6 +73,16 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./netsucket-darwin-arm64
-        asset_name: netsucket-darwin-arm64
+        asset_path: ./${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }}
+        asset_name: ${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }}
         asset_content_type: application/octet-stream
+
+    - name: Upload mac Mx (M1, M2) artifact SHA256 hash
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }}.sha256
+        asset_name: ${{ env.PRODUCT }}-${{ env.DARWIN_ARM64 }}.sha256
+        asset_content_type: text/plain

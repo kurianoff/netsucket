@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+var (
+    versionNumber string
+)
+
 // Function to handle proxying the data between two connections
 func proxyData(src, dest net.Conn) {
 	defer src.Close()
@@ -53,9 +57,15 @@ func main() {
 	host := flag.String("host", "localhost", "Netsucket host")
 	port := flag.String("port", "6000", "Netsucket port")
 	cmdStr := flag.String("cmdStr", "", "Bash command to establish tunnel connection")
+	version := flag.Bool("version", false, "Show netsucket version information")
 
 	// Parse the command-line arguments
 	flag.Parse()
+
+	if (*version == true) {
+		fmt.Println("netsucket version " + versionNumber)
+		return
+	}
 
 	if (*tunnelPort == "" || *cmdStr == "") {
 		fmt.Printf("Usage of %s:\n", os.Args[0])

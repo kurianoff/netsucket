@@ -48,7 +48,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./netsucket-darwin-amd64
-        asset_name: netsucket-darwin-amd64-${{ env.REF }}
+        asset_name: netsucket-darwin-amd64
         asset_content_type: application/octet-stream
 
     - name: Upload mac Mx (M1, M2) artifact
@@ -58,5 +58,5 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./netsucket-darwin-arm64
-        asset_name: netsucket-darwin-arm64-${{ env.REF }}
+        asset_name: netsucket-darwin-arm64
         asset_content_type: application/octet-stream

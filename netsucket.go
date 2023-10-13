@@ -24,12 +24,31 @@ func proxyData(src, dest net.Conn) {
 }
 
 func handleConnection(conn net.Conn, cmdStr string, tunnelPort string) {
+	// Connect to the tunnel port
+	tunnelConn, err := net.Dial("tcp", "localhost:"+tunnelPort)
+	if err != nil {
+		tunnelConn, err = establishConnection(conn, cmdStr, tunnelPort)
+		if err != nil {
+			fmt.Println("Error connecting to tunnel:", err)
+			data := []byte("ENCON: database connection failed (tunnel not available).\n")
+			conn.Write(data)
+			conn.Close()
+			return
+		}
+	}
+
+	// Start proxying data
+	go proxyData(conn, tunnelConn)
+	go proxyData(tunnelConn, conn)
+}
+
+func establishConnection(conn net.Conn, cmdStr string, tunnelPort string) (net.Conn, error) {
 	// Run the bash command if the tunnel is not yet established
 	cmd := exec.Command("bash", "-c", cmdStr)
 	err := cmd.Start() // Start instead of Run to not block the main routine
 	if err != nil {
 		fmt.Println("Error executing command:", err)
-		return
+		return nil, err
 	}
 
 	// Wait for the tunnel to be ready (this can be adjusted as needed)
@@ -37,19 +56,7 @@ func handleConnection(conn net.Conn, cmdStr string, tunnelPort string) {
 	// to determine when the tunnel is ready.
 	time.Sleep(2 * time.Second)
 
-	// Connect to the tunnel port
-	tunnelConn, err := net.Dial("tcp", "localhost:"+tunnelPort)
-	if err != nil {
-		fmt.Println("Error connecting to tunnel:", err)
-                data := []byte("ENCON: database connection failed (tunnel not available).\n")
-                conn.Write(data)
-                //conn.Close()
-		return
-	}
-
-	// Start proxying data
-	go proxyData(conn, tunnelConn)
-	go proxyData(tunnelConn, conn)
+	return net.Dial("tcp", "localhost:"+tunnelPort)
 }
 
 func main() {
